@@ -49,7 +49,7 @@ genotype_construction(_Config) ->
   SensorName = rng,
   ActuatorName = pts,
   HiddenLayerDensities = [1, 2],
-  Genotype = neurev_constructor:construct_genotype(
+  Genotype = neurev_genotype:construct(
                SensorName, ActuatorName, HiddenLayerDensities),
   UpdatedGenotype = neurev_exoself:map(Genotype),
   ?assertEqual(Genotype, UpdatedGenotype).

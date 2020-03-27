@@ -34,4 +34,4 @@ loop(Id, CortexPid, ActuatorName, {[], MemoryFaninPids}, Acc) ->
   loop(Id, CortexPid, ActuatorName, {MemoryFaninPids, MemoryFaninPids}, []).
 
 pts(Result) ->
-  io:format("actuator:pts/1 -> ~p~n", [Result]).
+  logger:debug("actuator:pts/1 -> ~p~n", [Result]).

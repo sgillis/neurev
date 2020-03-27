@@ -24,3 +24,10 @@
                 , actuator_ids :: [neurev:id()]
                 , neuron_ids :: [neurev:id()]
                 }).
+
+-record(genotype, { id :: neurev:id()
+                  , cortex :: #cortex{}
+                  , sensor :: #sensor{}
+                  , actuator :: #actuator{}
+                  , neurons :: [#neuron{}]
+                  }).

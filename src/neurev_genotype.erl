@@ -1,21 +1,28 @@
--module(neurev_constructor).
+-module(neurev_genotype).
 
 -include("neurev.hrl").
 
--export([ construct_genotype/3
-        , construct_genotype/4
-        , write_genotype/2
+-export([ construct/3
+        , construct/4
+        , write/2
+        , read/1
+        , print/1
+        , table/0
         ]).
 
+-define(TABLE, genotypes).
 
 %% API ---------------------------------------------------------------
 
-construct_genotype(FileName, SensorName, ActuatorName, HiddenLayerDensities) ->
-  Genotype = construct_genotype(SensorName, ActuatorName, HiddenLayerDensities),
-  ok = write_genotype(FileName, Genotype),
+construct( GenotypeName
+         , SensorName
+         , ActuatorName
+         , HiddenLayerDensities) ->
+  Genotype = construct(SensorName, ActuatorName, HiddenLayerDensities),
+  ok = write(GenotypeName, Genotype),
   {ok, Genotype}.
 
-construct_genotype(SensorName, ActuatorName, HiddenLayerDensities) ->
+construct(SensorName, ActuatorName, HiddenLayerDensities) ->
   S = create_sensor(SensorName),
   A = create_actuator(ActuatorName),
   OutputVectorLength = A#actuator.vector_length,
@@ -35,16 +42,28 @@ construct_genotype(SensorName, ActuatorName, HiddenLayerDensities) ->
                        , fanin_ids = OutputNeuronIds
                        },
   Cortex = create_cortex(CortexId, [S#sensor.id], [A#actuator.id], NeuronIds),
-  lists:flatten([Cortex, Sensor, Actuator | Neurons]).
+  #genotype{ id = generate_id()
+           , cortex = Cortex
+           , sensor = Sensor
+           , actuator = Actuator
+           , neurons = lists:flatten(Neurons)
+           }.
 
-write_genotype(FileName, Genotype) ->
-  {ok, File} = file:open(FileName, write),
-  lists:foreach(
-    fun(X) ->
-        io:format(File, "~p.~n", [X])
-    end, Genotype),
-  file:close(File).
+write(GenotypeName, Genotype) ->
+  ets:insert(?TABLE, {GenotypeName, Genotype}),
+  ok.
 
+read(GenotypeName) ->
+  [{GenotypeName, Genotype}] = ets:lookup(?TABLE, GenotypeName),
+  Genotype.
+
+print(GenotypeName) ->
+  Genotype = read(GenotypeName),
+  {ok, Defs} = pp_record:read(?MODULE),
+  io:format("~s~n", [pp_record:print(Genotype, Defs)]).
+
+table() ->
+  ?TABLE.
 
 %% Internal functions ------------------------------------------------
 

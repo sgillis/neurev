@@ -1,18 +1,13 @@
 -module(neurev_exoself).
 
 -export([ map/1
-        , test/0
         ]).
 
 -include("neurev.hrl").
 
-test() ->
-  Genotype = neurev_constructor:construct_genotype(rng, pts, [1,2]),
-  spawn(fun() -> map(Genotype) end).
-
 map(Genotype) ->
   ets:new(idspids, [set, named_table]),
-  [Cortex | CerebralUnits] = Genotype,
+  Cortex = Genotype#genotype.cortex,
   SensorIds = Cortex#cortex.sensor_ids,
   ActuatorIds = Cortex#cortex.actuator_ids,
   NeuronIds = Cortex#cortex.neuron_ids,
@@ -20,16 +15,17 @@ map(Genotype) ->
   spawn_cerebral_units(neurev_sensor, SensorIds),
   spawn_cerebral_units(neurev_actuator, ActuatorIds),
   spawn_cerebral_units(neurev_neuron, NeuronIds),
+  CerebralUnits = [ Genotype#genotype.sensor
+                  , Genotype#genotype.actuator
+                    | Genotype#genotype.neurons
+                  ],
   link_cerebral_units(CerebralUnits),
   link_cortex(Cortex),
   CortexPid = ets:lookup_element(idspids, Cortex#cortex.id, 2),
-  logger:debug("CortexPid: ~p~n", [CortexPid]),
-  logger:info("Genotype=~p", [Genotype]),
   receive
     {CortexPid, backup, NeuronIdsWeights} ->
       UpdatedGenotype = update_genotype(Genotype, NeuronIdsWeights),
       ets:delete(idspids),
-      logger:info("UpdatedGenotype=~p", [UpdatedGenotype]),
       UpdatedGenotype
   end.
 
@@ -98,10 +94,12 @@ link_cortex(Cortex) ->
               }.
 
 update_genotype(Genotype0, [{NeuronId, PidInput} | Weights]) ->
-  Neuron0 = lists:keyfind(NeuronId, 2, Genotype0),
+  Neurons0 = Genotype0#genotype.neurons,
+  Neuron0 = lists:keyfind(NeuronId, 2, Neurons0),
   Inputs = neuron_pid_input2neuron_input(PidInput, []),
   Neuron = Neuron0#neuron{input = Inputs},
-  Genotype = lists:keyreplace(NeuronId, 2, Genotype0, Neuron),
+  Neurons = lists:keyreplace(NeuronId, 2, Neurons0, Neuron),
+  Genotype = Genotype0#genotype{neurons = Neurons},
   update_genotype(Genotype, Weights);
 update_genotype(Genotype, []) ->
   Genotype.

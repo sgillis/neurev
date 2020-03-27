@@ -1,6 +1,8 @@
 {"1.1.0",
-[{<<"redbug">>,{pkg,<<"redbug">>,<<"1.2.1">>},0}]}.
+[{<<"pp_record">>,{pkg,<<"pp_record">>,<<"0.1.3">>},0},
+ {<<"redbug">>,{pkg,<<"redbug">>,<<"1.2.1">>},0}]}.
 [
 {pkg_hash,[
+ {<<"pp_record">>, <<"BDB1ED564D9BE9B2CB4BDCF0979073EC417378169B3DDA760922C7455A0314D3">>},
  {<<"redbug">>, <<"9153EE50E42C39CE3F6EFA65EE746F4A52896DA66862CFB59E7C0F838B7B8414">>}]}
 ].
