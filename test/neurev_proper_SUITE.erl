@@ -1,4 +1,4 @@
--module(neurev_SUITE).
+-module(neurev_proper_SUITE).
 
 %% Test server callbacks
 -export([ all/0
@@ -9,19 +9,19 @@
         ]).
 
 %% Test cases
--export([ genotype_construction/1
+-export([ genotype_props/1
         ]).
 
 -include_lib("common_test/include/ct.hrl").
 -include_lib("stdlib/include/assert.hrl").
--include("neurev.hrl").
+
 
 %%--------------------------------------------------------------------
 %% Common test callback functions
 %%--------------------------------------------------------------------
 
 all() ->
-  [ genotype_construction
+  [ genotype_props
   ].
 
 init_per_suite(Config) ->
@@ -41,17 +41,15 @@ end_per_testcase(Case, Config) ->
 %% Test cases
 %%--------------------------------------------------------------------
 
-genotype_construction({init, Config}) ->
+genotype_props({init, Config}) ->
   Config;
-genotype_construction({'end', _Config}) ->
+genotype_props({'end', _Config}) ->
   ok;
-genotype_construction(_Config) ->
-  LayerDensities = [1, 2],
-  Genotype = neurev_genotype:construct(
-               #morphology{ sensor_name = rng
-                          , actuator_name = pts
-                          , layer_densities = LayerDensities
-                          }),
-  ?assertEqual( lists:sum(LayerDensities) + 1
-              , length(Genotype#genotype.neurons)
-              ).
+genotype_props(_Config) ->
+  ?assert(proper:quickcheck(
+            prop_neurev:prop_genotype_unique_ids(),
+            [{numtests, 10}])),
+  ?assert(proper:quickcheck(
+            prop_neurev:prop_neuron_count_matches_densities(),
+            [{numtests, 10}])).
+

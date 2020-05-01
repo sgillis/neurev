@@ -2,9 +2,12 @@
 
 -include("neurev.hrl").
 
--export([ construct/3
-        , construct/4
+-export([ construct/2
+        , construct/1
         , write/2
+        , get_actuator_id/2
+        , get_neuron_id/2
+        , get_sensor_id/2
         , read/1
         , print/1
         , table/0
@@ -14,15 +17,15 @@
 
 %% API ---------------------------------------------------------------
 
-construct( GenotypeName
-         , SensorName
-         , ActuatorName
-         , HiddenLayerDensities) ->
-  Genotype = construct(SensorName, ActuatorName, HiddenLayerDensities),
+construct(GenotypeName, Morphology) ->
+  Genotype = construct(Morphology),
   ok = write(GenotypeName, Genotype),
   {ok, Genotype}.
 
-construct(SensorName, ActuatorName, HiddenLayerDensities) ->
+construct(#morphology{ sensor_name = SensorName
+                     , actuator_name = ActuatorName
+                     , layer_densities = HiddenLayerDensities
+                     }) ->
   S = create_sensor(SensorName),
   A = create_actuator(ActuatorName),
   OutputVectorLength = A#actuator.vector_length,
@@ -49,6 +52,17 @@ construct(SensorName, ActuatorName, HiddenLayerDensities) ->
            , neurons = lists:flatten(Neurons)
            }.
 
+get_actuator_id(Genotype, _Id) ->
+  Genotype#genotype.actuator.
+
+get_neuron_id(Genotype, Id) ->
+  Neurons = Genotype#genotype.neurons,
+  [Neuron] = lists:filter(fun(Neuron) -> Neuron#neuron.id =:= Id end, Neurons),
+  Neuron.
+
+get_sensor_id(Genotype, _Id) ->
+  Genotype#genotype.sensor.
+
 write(GenotypeName, Genotype) ->
   ets:insert(?TABLE, {GenotypeName, Genotype}),
   ok.
@@ -70,8 +84,15 @@ table() ->
 create_sensor(SensorName) ->
   case SensorName of
     rng ->
-      #sensor{ id = {sensor, generate_id()}
+      #sensor{ id = generate_id()
              , name = rng
+             , vector_length = 2
+             , scape = none
+             };
+    xor_mimic ->
+      #sensor{ id = generate_id()
+             , name = xor_get_input
+             , scape = {private, xor_sim}
              , vector_length = 2
              };
     _ ->
@@ -81,8 +102,15 @@ create_sensor(SensorName) ->
 create_actuator(ActuatorName) ->
   case ActuatorName of
     pts ->
-      #actuator{ id = {actuator, generate_id()}
+      #actuator{ id = generate_id()
                , name = pts
+               , vector_length = 1
+               , scape = none
+               };
+    xor_mimic ->
+      #actuator{ id = generate_id()
+               , name = xor_send_output
+               , scape = {private, xor_sim}
                , vector_length = 1
                };
     _ ->
@@ -160,7 +188,7 @@ generate_ids(Index, Acc) ->
   generate_ids(Index - 1, [Id | Acc]).
 
 generate_id() ->
-  erlang:phash2(erlang:timestamp()).
+  uuid:uuid_to_string(uuid:get_v4()).
 
 create_cortex(CortexId, SensorIds, ActuatorIds, NeuronIds) ->
   #cortex{ id = CortexId

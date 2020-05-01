@@ -1,38 +1,59 @@
 -module(neurev_sensor).
 
 -export([ gen/2
-        , loop/1
-        , rng/1
+        , prep/1
+        , rng/2
+        , xor_get_input/2
         ]).
 
 -include("neurev.hrl").
+-include_lib("kernel/include/logger.hrl").
 
 
 %% API ---------------------------------------------------------------
 
-gen(ExoSelfPid, Node) ->
-  spawn(Node, ?MODULE, loop, [ExoSelfPid]).
+gen(ExoPid, Node) ->
+  spawn(Node, ?MODULE, prep, [ExoPid]).
 
-loop(ExoSelfPid) ->
+prep(ExoPid) ->
+  ?LOG_DEBUG("sensor=~p waiting for setup", [self()]),
   receive
-    {ExoSelfPid, {Id, CortexPid, SensorName, VectorLength, FanoutPids}} ->
-      loop(Id, CortexPid, SensorName, VectorLength, FanoutPids)
+    {ExoPid, {Id, CortexPid, Scape, SensorName, VectorLength, FanoutPids}} ->
+      ?LOG_DEBUG("sensor=~p setup received", [self()]),
+      loop(Id, ExoPid, CortexPid, Scape, SensorName, VectorLength, FanoutPids)
   end.
 
-loop(Id, CortexPid, SensorName, VectorLength, FanoutPids) ->
+loop(Id, ExoPid, CortexPid, Scape, SensorName, VectorLength, FanoutPids) ->
   receive
     {CortexPid, sync} ->
-      SensoryVector = neurev_sensor:SensorName(VectorLength),
+      SensoryVector = neurev_sensor:SensorName(VectorLength, Scape),
       [Pid ! {self(), forward, SensoryVector} || Pid <- FanoutPids],
-      loop(Id, CortexPid, SensorName, VectorLength, FanoutPids);
-    {CortexPid, terminate} ->
+      ?LOG_DEBUG("sensor=~p received sync, sent vector=~p",
+                   [Id, SensoryVector]),
+      loop(Id, ExoPid, CortexPid, Scape, SensorName, VectorLength, FanoutPids);
+    {ExoPid, terminate} ->
       ok
   end.
 
-rng(VectorLength) ->
-  rng(VectorLength, []).
+rng(VectorLength, _Scape) ->
+  rng1(VectorLength, []).
 
-rng(0, Acc) ->
+rng1(0, Acc) ->
   Acc;
-rng(VectorLength, Acc) ->
-  rng(VectorLength - 1, [rand:uniform() | Acc]).
+rng1(VectorLength, Acc) ->
+  rng1(VectorLength - 1, [rand:uniform() | Acc]).
+
+xor_get_input(VectorLength, Scape) ->
+  Scape ! {self(), sense},
+  receive
+    {Scape, percept, SensoryVector} ->
+      case length(SensoryVector) == VectorLength of
+        true ->
+          SensoryVector;
+        false ->
+          ?LOG_WARNING("Error in neurev_sensor:xor_get_input/2 "
+                       "VectorLength=~p SensoryVector=~p",
+                       [VectorLength, SensoryVector]),
+          lists:duplicate(VectorLength, 0)
+      end
+  end.

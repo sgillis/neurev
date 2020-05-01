@@ -1,20 +1,22 @@
--record(sensor, { id            :: neurev:id()
-                , cortex_id     :: neurev:id()
-                , name          :: neurev:modfun()
-                , vector_length :: non_neg_integer()
-                , fanout_ids    :: [neurev:id()]
+-record(sensor, { id              :: neurev:id()
+                , cortex_id       :: undefined | neurev:id()
+                , name            :: atom()
+                , vector_length   :: non_neg_integer()
+                , fanout_ids = [] :: [neurev:id()]
+                , scape           :: neurev:scape()
                 }).
 
--record(actuator, { id            :: neurev:id()
-                  , cortex_id     :: neurev:id()
-                  , name          :: neurev:modfun()
-                  , vector_length :: non_neg_integer()
-                  , fanin_ids     :: [neurev:id()]
+-record(actuator, { id             :: neurev:id()
+                  , cortex_id      :: undefined | neurev:id()
+                  , name           :: atom()
+                  , vector_length  :: non_neg_integer()
+                  , fanin_ids = [] :: [neurev:id()]
+                  , scape          :: neurev:scape()
                   }).
 
 -record(neuron, { id :: neurev:id()
                 , cortex_id :: neurev:id()
-                , activation_function :: neurev:modfun()
+                , activation_function :: atom()
                 , input :: neurev:neuron_input()
                 , output :: [neurev:id()]
                 }).
@@ -31,3 +33,8 @@
                   , actuator :: #actuator{}
                   , neurons :: [#neuron{}]
                   }).
+
+-record(morphology, { sensor_name :: atom()
+                    , actuator_name :: atom()
+                    , layer_densities :: [pos_integer()]
+                    }).
