@@ -12,7 +12,7 @@ gen(ExoSelfPid, Node) ->
   spawn(Node, ?MODULE, prep, [ExoSelfPid]).
 
 prep(ExoPid) ->
-  rand:seed(exs1024, erlang:timestamp()),
+  neurev_rand:seed(),
   ?LOG_DEBUG("cortex=~p waiting for setup", [self()]),
   receive
     {ExoPid, Id, SensorPids, NeuronPids, ActuatorPids} ->

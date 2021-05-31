@@ -16,12 +16,12 @@
 
 start(_StartType, _StartArgs) ->
   ok = logger:update_primary_config(#{level => debug}),
-  ets:new(neurev_genotype:table(), [public, set, named_table]),
+  neurev_polis:start(),
   neurev_sup:start_link().
 
 %%--------------------------------------------------------------------
 stop(_State) ->
-    ok.
+  ok.
 
 %%====================================================================
 %% Internal functions

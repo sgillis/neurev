@@ -19,7 +19,7 @@ gen(ExoPid, Node) ->
   spawn(Node, ?MODULE, prep, [ExoPid]).
 
 prep(ExoPid) ->
-  rand:seed(exs1024, erlang:timestamp()),
+  neurev_rand:seed(),
   receive
     {ExoPid, {Id, CortexPid, ActivationFunction, InputPids, OutputPids}} ->
       loop(Id, ExoPid, CortexPid, ActivationFunction, {InputPids, InputPids},

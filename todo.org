@@ -1,0 +1,11 @@
+* DONE Continue on neurev_genotype_SUITE:create_test
+  CLOSED: [2020-05-18 Mon 08:59]
+  p258 in the book
+* DONE Continue p268
+  CLOSED: [2020-05-21 Thu 12:29]
+  link_neuron_neuron
+* DONE Continue p.278
+  CLOSED: [2020-06-08 Mon 08:31]
+  mutate_af
+* Continue p.285
+  add_actuatorlink

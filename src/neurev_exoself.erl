@@ -9,7 +9,7 @@
 -define(MAX_ATTEMPTS, 10).
 
 prep(GenotypeName, Genotype) ->
-  rand:seed(exs1024, erlang:timestamp()),
+  neurev_rand:seed(),
   IdsPids = ets:new(idspids, [set, private]),
   Cortex = Genotype#genotype.cortex,
   SensorIds = Cortex#cortex.sensor_ids,
